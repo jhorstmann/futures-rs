@@ -41,6 +41,17 @@ impl<'a> ReadBuf<'a> {
     }
 
     #[inline]
+    pub(super) fn set_len(&mut self, len: usize) {
+        assert!(len <= self.initialized);
+        unsafe { self.buf.set_len(len) };
+    }
+
+    #[inline]
+    pub(super) fn len(&self) -> usize {
+        self.buf.len()
+    }
+
+    #[inline]
     pub(super) fn as_slice(&self) -> &[u8] {
         &self.buf
     }
@@ -78,7 +89,7 @@ pub(super) fn read_to_end_internal<R: AsyncRead + ?Sized>(
     cx: &mut Context<'_>,
     rb: &mut ReadBuf<'_>,
 ) -> Poll<io::Result<usize>> {
-    let mut g = Guard { len: rb.buf.len(), buf: &mut rb.buf };
+    let mut g = Guard { len: rb.buf.len(), buf: rb.buf };
     loop {
         if g.len == rb.initialized {
             // No pre-zeroed space remaining; need to grow.
